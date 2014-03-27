@@ -35,6 +35,9 @@ class Config(model.Base):
   microsoft_client_id = ndb.StringProperty(default='')
   microsoft_client_secret = ndb.StringProperty(default='')
   notify_on_new_user = ndb.BooleanProperty(default=True)
+  odnoklassniki_app_id = ndb.StringProperty(default='')
+  odnoklassniki_app_secret = ndb.StringProperty(default='')
+  odnoklassniki_consumer_public = ndb.StringProperty(default='')
   recaptcha_private_key = ndb.StringProperty(default='')
   recaptcha_public_key = ndb.StringProperty(default='')
   reddit_client_id = ndb.StringProperty(default='')
@@ -78,6 +81,10 @@ class Config(model.Base):
   def has_linkedin(self):
     return bool(self.linkedin_api_key and self.linkedin_secret_key)
 
+  @property
+  def has_odnoklassniki(self):
+    return bool(self.odnoklassniki_app_id and self.odnoklassniki_app_secret and self.odnoklassniki_consumer_public)
+  
   @property
   def has_recaptcha(self):
     return bool(self.recaptcha_private_key and self.recaptcha_public_key)
@@ -130,7 +137,10 @@ class Config(model.Base):
       'microsoft_client_id',
       'microsoft_client_secret',
       'notify_on_new_user',
+      'odnoklassniki_app_id',
       'recaptcha_private_key',
+      'odnoklassniki_app_secret',
+      'odnoklassniki_consumer_public',
       'recaptcha_public_key',
       'reddit_client_id',
       'reddit_client_secret',

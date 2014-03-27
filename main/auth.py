@@ -2,6 +2,8 @@
 
 from base64 import b64encode
 import functools
+import hashlib
+import json
 import re
 
 from flask.ext import login
@@ -170,6 +172,7 @@ def signin():
   google_signin_url = url_for_signin('google', next_url)
   instgram_signin_url = url_for_signin('instagram', next_url)
   linkedin_signin_url = url_for_signin('linkedin', next_url)
+  odnoklassniki_signin_url = flask.url_for('signin_odnoklassniki', next=next_url)
   reddit_signin_url = url_for_signin('reddit', next_url)
   stackoverflow_signin_url = url_for_signin('stackoverflow', next_url)
   twitter_signin_url = url_for_signin('twitter', next_url)
@@ -188,6 +191,7 @@ def signin():
       google_signin_url=google_signin_url,
       instagram_signin_url=instgram_signin_url,
       linkedin_signin_url=linkedin_signin_url,
+      odnoklassniki_signin_url=odnoklassniki_signin_url,
       reddit_signin_url=reddit_signin_url,
       stackoverflow_signin_url=stackoverflow_signin_url,
       twitter_signin_url=twitter_signin_url,
@@ -666,6 +670,105 @@ def retrieve_user_from_linkedin(response):
       full_name,
       response['emailAddress'] or full_name,
       response['emailAddress'],
+    )
+
+
+###############################################################################
+# Odnoklassniki
+###############################################################################
+odnoklassniki_oauth = oauth.OAuth()
+
+odnoklassniki = odnoklassniki_oauth.remote_app(
+    'odnoklassniki',
+    base_url='http://api.odnoklassniki.ru/',
+    request_token_url=None,
+    access_token_url='http://api.odnoklassniki.ru/oauth/token.do',
+    authorize_url='http://www.odnoklassniki.ru/oauth/authorize',
+    consumer_key=model.Config.get_master_db().odnoklassniki_app_id,
+    consumer_secret=model.Config.get_master_db().odnoklassniki_app_secret,
+    access_token_params={'grant_type': 'authorization_code'},
+    access_token_method='POST'
+)
+
+
+def odnoklassniki_oauth_sig(data, client_secret):
+  suffix = hashlib.md5(
+      '{0:s}{1:s}'.format(data['access_token'], client_secret)
+    ).hexdigest()
+  check_list = sorted([
+      '{0:s}={1:s}'.format(key, value)
+      for key, value in data.items()
+      if key != 'access_token'
+    ])
+  return hashlib.md5(''.join(check_list) + suffix).hexdigest()
+
+
+@app.route('/_s/callback/odnoklassniki/oauth-authorized/')
+@odnoklassniki.authorized_handler
+def odnoklassniki_authorized(resp):
+  if resp is None:
+    return 'Access denied: reason=%s error=%s' % (
+      flask.request.args['error_reason'],
+      flask.request.args['error_description']
+    )
+  access_token = resp.get('access_token')
+  if not access_token:
+    return 'Access denied: reason=%s error=%s' % (
+        resp.get('error_description', 'Unknown'),
+        resp.get('error', 'Unknown'),
+      )
+  flask.session['oauth_token'] = (access_token, '')
+  try:
+    data = {
+      'method': 'users.getCurrentUser',
+      'application_key':
+        model.Config.get_master_db().odnoklassniki_consumer_public,
+      'access_token': access_token,
+    }
+    data['sig'] = odnoklassniki_oauth_sig(
+        data, client_secret=odnoklassniki.consumer_secret
+      )
+    params = urllib.urlencode(data)
+    url = odnoklassniki.base_url + 'fb.do'
+    request = urllib2.Request(url, params)
+    odnoklassniki_resp = json.loads(urllib2.urlopen(request).read())
+    user_db = retrieve_user_from_odnoklassniki(odnoklassniki_resp)
+  except:
+    flask.flash(
+      'Something went wrong with Twitter sign in. Please try again.',
+      category='danger'
+    )
+    return flask.redirect(flask.url_for(
+        'auth.signin', next=util.get_next_url())
+      )
+  return signin_user_db(user_db)
+
+
+@odnoklassniki.tokengetter
+def get_odnoklassniki_oauth_token():
+    return flask.session.get('oauth_token')
+
+
+@app.route('/signin/odnoklassniki/')
+def signin_odnoklassniki():
+  return odnoklassniki.authorize(
+      callback=flask.url_for(
+          'odnoklassniki_authorized',
+          next=util.get_next_url(),
+          _external=True,
+        )
+    )
+
+
+def retrieve_user_from_odnoklassniki(response):
+  auth_id = 'odnoklassniki_%s' % response['user_id']
+  user_db = model.User.retrieve_one_by('auth_ids', auth_id)
+  if user_db:
+    return user_db
+
+  return create_user_db(
+      auth_id,
+      response['name'],
     )
 
 

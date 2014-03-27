@@ -1,0 +1,16 @@
+{{
+  forms.oauth_fields(
+      'Odnoklassniki',
+      (
+          form.odnoklassniki_app_id,
+          form.odnoklassniki_app_secret,
+          form.odnoklassniki_consumer_public,
+        ),
+      '''
+        Redirect URL for <a
+          href="http://www.odnoklassniki.ru/dk?st.cmd=appsInfoMyDevList"
+          target="_blank">Odnoklassniki application</a>:
+        <em>%s</em>
+      ''' % url_for('odnoklassniki_authorized', _external=True)
+    )
+}}
