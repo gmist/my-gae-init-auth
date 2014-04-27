@@ -751,6 +751,7 @@ def get_odnoklassniki_oauth_token():
 
 @app.route('/signin/odnoklassniki/')
 def signin_odnoklassniki():
+  save_request_params()
   return odnoklassniki.authorize(
       callback=flask.url_for(
           'odnoklassniki_authorized',
