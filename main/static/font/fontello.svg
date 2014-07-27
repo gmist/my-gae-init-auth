@@ -1,0 +1,12 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg">
+<metadata>Copyright (C) 2014 by original authors @ fontello.com</metadata>
+<defs>
+<font id="fontello" horiz-adv-x="1000" >
+<font-face font-family="fontello" font-weight="400" font-stretch="normal" units-per-em="1000" ascent="850" descent="-150" />
+<missing-glyph horiz-adv-x="1000" />
+<glyph glyph-name="odnoklassniki" unicode="&#xe800;" d="m290 850c-143 0-258-116-258-258 0-142 115-258 258-258 142 0 258 116 258 258 0 142-116 258-258 258z m0-151c59 0 107-48 107-107 0-59-48-107-107-107-59 0-107 48-107 107 0 59 48 107 107 107z m-213-374c-26 0-51-12-65-35-23-36-12-82 23-105 47-29 98-50 150-62l-144-144c-30-30-30-77 0-107 15-15 34-22 53-22 20 0 39 7 54 22l142 142 141-142c30-29 78-29 107 0 30 30 30 78 0 107l-144 144c53 12 103 33 150 62 35 23 46 69 24 105-23 35-69 46-105 23-105-66-241-66-347 0-12 8-26 12-39 12z" horiz-adv-x="579" />
+</font>
+</defs>
+</svg>
