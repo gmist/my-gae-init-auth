@@ -14,6 +14,8 @@ from google.appengine.ext import ndb
 from werkzeug import urls
 import flask
 import unidecode
+import urllib
+import urllib2
 
 import config
 import model
@@ -678,17 +680,20 @@ def retrieve_user_from_linkedin(response):
 ###############################################################################
 odnoklassniki_oauth = oauth.OAuth()
 
-odnoklassniki = odnoklassniki_oauth.remote_app(
-    'odnoklassniki',
-    base_url='http://api.odnoklassniki.ru/',
+app.config['ODNOKLASSNIKI'] = dict(
+    base_url='https://api.odnoklassniki.ru/',
     request_token_url=None,
-    access_token_url='http://api.odnoklassniki.ru/oauth/token.do',
-    authorize_url='http://www.odnoklassniki.ru/oauth/authorize',
-    consumer_key=model.Config.get_master_db().odnoklassniki_app_id,
-    consumer_secret=model.Config.get_master_db().odnoklassniki_app_secret,
-    access_token_params={'grant_type': 'authorization_code'},
+    access_token_url='https://api.odnoklassniki.ru/oauth/token.do',
+    authorize_url='https://www.odnoklassniki.ru/oauth/authorize',
+    consumer_key=config.CONFIG_DB.odnoklassniki_app_id,
+    consumer_secret=config.CONFIG_DB.odnoklassniki_app_secret,
     access_token_method='POST'
 )
+
+odnoklassniki = odnoklassniki_oauth.remote_app(
+    'odnoklassniki', app_key='ODNOKLASSNIKI'
+  )
+odnoklassniki_oauth.init_app(app)
 
 
 def odnoklassniki_oauth_sig(data, client_secret):
@@ -704,13 +709,13 @@ def odnoklassniki_oauth_sig(data, client_secret):
 
 
 @app.route('/_s/callback/odnoklassniki/oauth-authorized/')
-@odnoklassniki.authorized_handler
-def odnoklassniki_authorized(resp):
+def odnoklassniki_authorized():
+  resp = odnoklassniki.authorized_response()
   if resp is None:
     return 'Access denied: reason=%s error=%s' % (
-      flask.request.args['error_reason'],
-      flask.request.args['error_description']
-    )
+        flask.request.args['error_reason'],
+        flask.request.args['error_description']
+      )
   access_token = resp.get('access_token')
   if not access_token:
     return 'Access denied: reason=%s error=%s' % (
@@ -720,11 +725,11 @@ def odnoklassniki_authorized(resp):
   flask.session['oauth_token'] = (access_token, '')
   try:
     data = {
-      'method': 'users.getCurrentUser',
-      'application_key':
-        model.Config.get_master_db().odnoklassniki_consumer_public,
-      'access_token': access_token,
-    }
+        'method': 'users.getCurrentUser',
+        'application_key':
+        config.CONFIG_DB.odnoklassniki_consumer_public,
+        'access_token': access_token,
+      }
     data['sig'] = odnoklassniki_oauth_sig(
         data, client_secret=odnoklassniki.consumer_secret
       )
@@ -735,9 +740,9 @@ def odnoklassniki_authorized(resp):
     user_db = retrieve_user_from_odnoklassniki(odnoklassniki_resp)
   except:
     flask.flash(
-      'Something went wrong with Twitter sign in. Please try again.',
-      category='danger'
-    )
+        'Something went wrong with Twitter sign in. Please try again.',
+        category='danger'
+      )
     return flask.redirect(flask.url_for(
         'auth.signin', next=util.get_next_url())
       )
@@ -753,22 +758,19 @@ def get_odnoklassniki_oauth_token():
 def signin_odnoklassniki():
   save_request_params()
   return odnoklassniki.authorize(
-      callback=flask.url_for(
-          'odnoklassniki_authorized',
-          next=util.get_next_url(),
-          _external=True,
-        )
+      callback=flask.url_for('odnoklassniki_authorized', _external=True)
     )
 
 
 def retrieve_user_from_odnoklassniki(response):
   auth_id = 'odnoklassniki_%s' % response['user_id']
-  user_db = model.User.retrieve_one_by('auth_ids', auth_id)
+  user_db = model.User.get_by('auth_ids', auth_id)
   if user_db:
     return user_db
 
   return create_user_db(
       auth_id,
+      response['name'],
       response['name'],
     )
 

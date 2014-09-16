@@ -84,7 +84,7 @@ class Config(model.Base):
   @property
   def has_odnoklassniki(self):
     return bool(self.odnoklassniki_app_id and self.odnoklassniki_app_secret and self.odnoklassniki_consumer_public)
-  
+
   @property
   def has_recaptcha(self):
     return bool(self.recaptcha_private_key and self.recaptcha_public_key)
@@ -138,9 +138,9 @@ class Config(model.Base):
       'microsoft_client_secret',
       'notify_on_new_user',
       'odnoklassniki_app_id',
-      'recaptcha_private_key',
       'odnoklassniki_app_secret',
       'odnoklassniki_consumer_public',
+      'recaptcha_private_key',
       'recaptcha_public_key',
       'reddit_client_id',
       'reddit_client_secret',
