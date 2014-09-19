@@ -710,17 +710,17 @@ def odnoklassniki_oauth_sig(data, client_secret):
 
 @app.route('/_s/callback/odnoklassniki/oauth-authorized/')
 def odnoklassniki_authorized():
-  resp = odnoklassniki.authorized_response()
-  if resp is None:
+  response = odnoklassniki.authorized_response()
+  if response is None:
     return 'Access denied: reason=%s error=%s' % (
         flask.request.args['error_reason'],
         flask.request.args['error_description']
       )
-  access_token = resp.get('access_token')
+  access_token = response.get('access_token')
   if not access_token:
     return 'Access denied: reason=%s error=%s' % (
-        resp.get('error_description', 'Unknown'),
-        resp.get('error', 'Unknown'),
+        response.get('error_description', 'Unknown'),
+        response.get('error', 'Unknown'),
       )
   flask.session['oauth_token'] = (access_token, '')
   try:
@@ -756,10 +756,7 @@ def get_odnoklassniki_oauth_token():
 
 @app.route('/signin/odnoklassniki/')
 def signin_odnoklassniki():
-  save_request_params()
-  return odnoklassniki.authorize(
-      callback=flask.url_for('odnoklassniki_authorized', _external=True)
-    )
+  return signin_oauth(odnoklassniki)
 
 
 def retrieve_user_from_odnoklassniki(response):
@@ -769,9 +766,9 @@ def retrieve_user_from_odnoklassniki(response):
     return user_db
 
   return create_user_db(
-      auth_id,
-      response['name'],
-      response['name'],
+      auth_id=auth_id,
+      name=response['name'],
+      username=response['name'],
     )
 
 
