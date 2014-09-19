@@ -174,7 +174,7 @@ def signin():
   google_signin_url = url_for_signin('google', next_url)
   instgram_signin_url = url_for_signin('instagram', next_url)
   linkedin_signin_url = url_for_signin('linkedin', next_url)
-  odnoklassniki_signin_url = flask.url_for('signin_odnoklassniki', next=next_url)
+  odnoklassniki_signin_url = url_for_signin('odnoklassniki', next=next_url)
   reddit_signin_url = url_for_signin('reddit', next_url)
   stackoverflow_signin_url = url_for_signin('stackoverflow', next_url)
   twitter_signin_url = url_for_signin('twitter', next_url)
